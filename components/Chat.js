@@ -25,7 +25,7 @@ const Chat = ({ route, navigation }) => {
 			},
 			{
 				_id: 2,
-				text: `Weclome to the chatroom, ${name}. Please be respectful.`,
+				text: `${name} has entered chatroom. Please be respectful.`,
 				createdAt: new Date(),
 				system: true,
 			},
