@@ -9,10 +9,12 @@ import {
 	TouchableOpacity,
 	ImageBackground,
 	KeyboardAvoidingView,
+  Alert,
 } from "react-native";
 import { SvgXml } from "react-native-svg";
 import iconSvg from "../assets/icon.js";
 import backgroundImage from "../assets/Background-Image.png";
+import { getAuth, signInAnonymously, updateProfile } from "firebase/auth";
 
 const Start = ({ navigation }) => {
 	const [name, setName] = useState("");
@@ -31,6 +33,27 @@ const Start = ({ navigation }) => {
 		setSelectedButton(index);
 		setTextColor(textColor);
 	};
+
+  const handleSignIn = async () => {
+    const auth = getAuth();
+    try {
+      const userCredential = await signInAnonymously(auth);
+      if (userCredential) {
+        const user = userCredential.user;
+        await updateProfile(user, {displayName: name});
+        navigation.navigate("Chat", {
+          user: user,
+          name: name,
+          backgroundColor: selectedColor,
+          textColor: textColor,
+        });
+      } else {
+        Alert.alert("No user credential returned");
+      }
+    } catch (error) {
+      Alert.alert(error.message);
+    }
+  };
 
 	return (
 		<KeyboardAvoidingView
@@ -96,13 +119,7 @@ const Start = ({ navigation }) => {
 					</View>
 					<TouchableOpacity
 						style={styles.button}
-						onPress={() =>
-							navigation.navigate("Chat", {
-								name: name,
-								backgroundColor: selectedColor,
-								textColor: textColor,
-							})
-						}
+						onPress={handleSignIn}
 						accessible={true}
 						accessibilityLabel="Start chatting button"
 						accessibilityHint="Press this to start chatting"

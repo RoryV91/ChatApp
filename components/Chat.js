@@ -1,62 +1,74 @@
 import React from "react";
 import { useState, useEffect } from "react";
-import { StyleSheet, View, KeyboardAvoidingView, Platform } from "react-native";
-import { GiftedChat, Bubble, SystemMessage as GiftedChatSystemMessage, Day } from "react-native-gifted-chat";
+import { StyleSheet, View, KeyboardAvoidingView, Platform, Text } from "react-native";
+import { GiftedChat, Bubble, SystemMessage as GiftedChatSystemMessage, Day, Message, MessageText } from "react-native-gifted-chat";
+import { collection, query, onSnapshot, orderBy, addDoc } from "firebase/firestore";
 
-const Chat = ({ route, navigation }) => {
-	const { name, backgroundColor, textColor } = route.params;
+const Chat = ({ route, navigation, db }) => {
+const { user, name, backgroundColor, textColor } = route.params;
 	const [messages, setMessages] = useState([]);
 
 	useEffect(() => {
 		navigation.setOptions({ title: name });
 	}, []);
 
-	useEffect(() => {
-		setMessages([
-			{
-				_id: 1,
-				text: `Hello ${name}! Welcome to the chatroom. Say hi to everyone! 👋`,
-				createdAt: new Date(),
-				user: {
-					_id: 2,
-					name: "React Native",
-					avatar: "https://pngimg.com/uploads/server/server_PNG58.png",
-				},
-			},
-			{
-				_id: 2,
-				text: `${name} has entered chatroom. Please be respectful.`,
-				createdAt: new Date(),
-				system: true,
-			},
-		]);
-	}, []);
+  useEffect(() => {
+    const messagesRef = collection(db, "messages");
+    const q = query(messagesRef, orderBy("createdAt", "desc"));
 
-	const onSend = (newMessages) => {
-		setMessages((previousMessages) =>
-			GiftedChat.append(previousMessages, newMessages)
-		);
-	};
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const messages = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        const id = doc.id;
+        return {
+          _id: id,
+          text: data.text,
+          createdAt: data.createdAt.toDate(),
+          user: {
+            _id: data.user._id,
+            name: data.user.displayName, 
+          }
+        };
+      });
+      setMessages(messages);
+    });
 
-	const renderBubble = (props) => {
-		return (
-			<Bubble
-				{...props}
-				wrapperStyle={{
-					right: {
-						backgroundColor: "#000",
-            borderColor: '#FFF',
-            borderWidth: 2,
-					},
-					left: {
-						backgroundColor: "#FFF",
-            borderColor: '#000',
-            borderWidth: 2,
-					},
-				}}
-			/>
-		);
-	};
+    return unsubscribe;
+  }, []);
+
+  const onSend = (newMessages) => {
+    addDoc(collection(db, "messages"), {
+      ...newMessages[0],
+      user: {
+        _id: user.uid,
+        name: user.displayName, 
+      },
+    });
+  };
+// const renderBubble = (props) => {
+//     return (
+//         <View>
+//             <Text style={{ color: props.currentMessage.user._id === user.uid ? '#FFF' : '#000' }}>
+//                 {props.currentMessage.user.name}
+//             </Text>
+//             <Bubble
+//                 {...props}
+//                 wrapperStyle={{
+//                     right: {
+//                         backgroundColor: "#000",
+//                         borderColor: '#FFF',
+//                         borderWidth: 2,
+//                     },
+//                     left: {
+//                         backgroundColor: "#FFF",
+//                         borderColor: '#000',
+//                         borderWidth: 2,
+//                     },
+//                 }}
+//             />
+//         </View>
+//     );
+// };
 
   const renderSystemMessage = (props) => (
     <GiftedChatSystemMessage
@@ -72,6 +84,7 @@ const Chat = ({ route, navigation }) => {
     />
   );
 
+
 	return (
 		<View style={[styles.container, { backgroundColor }]}>
 			<KeyboardAvoidingView
@@ -81,13 +94,16 @@ const Chat = ({ route, navigation }) => {
 			>
         <GiftedChat
           messages={messages}
-          renderBubble={renderBubble}
+          // renderBubble={renderBubble}
           renderSystemMessage={renderSystemMessage}
+          renderUsernameOnMessage={true}
           renderDay={renderDay}
           onSend={(messages) => onSend(messages)}
           user={{
-            _id: 1,
+            _id: user.uid,
+            name: user.displayName,
           }}
+          alwaysShowSend={true}
           accessible={true}
           accessibilityLabel="Chat interface"
           accessibilityHint="Use this to chat with other users"
