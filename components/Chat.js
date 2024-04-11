@@ -37,6 +37,7 @@ const { user, name, backgroundColor, textColor } = route.params;
   }, []);
 
   const onSend = (newMessages) => {
+    console.log(user)
     addDoc(collection(db, "messages"), {
       ...newMessages[0],
       user: {
@@ -101,7 +102,7 @@ const { user, name, backgroundColor, textColor } = route.params;
           onSend={(messages) => onSend(messages)}
           user={{
             _id: user.uid,
-            name: user.displayName,
+            name: name,
           }}
           alwaysShowSend={true}
           accessible={true}
