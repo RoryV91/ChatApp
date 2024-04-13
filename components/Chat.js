@@ -1,7 +1,7 @@
 import React from "react";
 import { useState, useEffect } from "react";
-import { StyleSheet, View, KeyboardAvoidingView, Platform, Text } from "react-native";
-import { GiftedChat, Bubble, SystemMessage as GiftedChatSystemMessage, Day, Message, MessageText } from "react-native-gifted-chat";
+import { StyleSheet, View, KeyboardAvoidingView, Platform } from "react-native";
+import { GiftedChat, Bubble, SystemMessage as GiftedChatSystemMessage, Day } from "react-native-gifted-chat";
 import { collection, query, onSnapshot, orderBy, addDoc } from "firebase/firestore";
 
 const Chat = ({ route, navigation, db }) => {
@@ -26,7 +26,7 @@ const { user, name, backgroundColor, textColor } = route.params;
           createdAt: data.createdAt.toDate(),
           user: {
             _id: data.user._id,
-            name: data.user.displayName, 
+            name: data.user.name, 
           }
         };
       });
@@ -38,6 +38,7 @@ const { user, name, backgroundColor, textColor } = route.params;
 
   const onSend = (newMessages) => {
     console.log(user)
+    console.log(newMessages[0])
     addDoc(collection(db, "messages"), {
       ...newMessages[0],
       user: {
@@ -46,30 +47,7 @@ const { user, name, backgroundColor, textColor } = route.params;
       },
     });
   };
-// const renderBubble = (props) => {
-//     return (
-//         <View>
-//             <Text style={{ color: props.currentMessage.user._id === user.uid ? '#FFF' : '#000' }}>
-//                 {props.currentMessage.user.name}
-//             </Text>
-//             <Bubble
-//                 {...props}
-//                 wrapperStyle={{
-//                     right: {
-//                         backgroundColor: "#000",
-//                         borderColor: '#FFF',
-//                         borderWidth: 2,
-//                     },
-//                     left: {
-//                         backgroundColor: "#FFF",
-//                         borderColor: '#000',
-//                         borderWidth: 2,
-//                     },
-//                 }}
-//             />
-//         </View>
-//     );
-// };
+
 
   const renderSystemMessage = (props) => (
     <GiftedChatSystemMessage
@@ -85,6 +63,14 @@ const { user, name, backgroundColor, textColor } = route.params;
     />
   );
 
+  const renderBubble = (props) => {
+    return (
+      <Bubble
+        {...props}
+        renderUsernameOnMessage={true}
+      />
+    );
+  };
 
 	return (
 		<View style={[styles.container, { backgroundColor }]}>
@@ -95,14 +81,14 @@ const { user, name, backgroundColor, textColor } = route.params;
 			>
         <GiftedChat
           messages={messages}
-          // renderBubble={renderBubble}
+          renderBubble={renderBubble}
           renderSystemMessage={renderSystemMessage}
           renderUsernameOnMessage={true}
           renderDay={renderDay}
           onSend={(messages) => onSend(messages)}
           user={{
             _id: user.uid,
-            name: name,
+            name: user.name,
           }}
           alwaysShowSend={true}
           accessible={true}

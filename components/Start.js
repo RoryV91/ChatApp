@@ -34,26 +34,28 @@ const Start = ({ navigation }) => {
 		setTextColor(textColor);
 	};
 
-  const handleSignIn = async () => {
-    const auth = getAuth();
-    try {
-      const userCredential = await signInAnonymously(auth);
-      if (userCredential) {
-        const user = userCredential.user;
-        await updateProfile(user, {displayName: name});
-        navigation.navigate("Chat", {
-          user: user,
-          name: name,
-          backgroundColor: selectedColor,
-          textColor: textColor,
-        });
-      } else {
-        Alert.alert("No user credential returned");
-      }
-    } catch (error) {
-      Alert.alert(error.message);
-    }
-  };
+const handleSignIn = async () => {
+	const auth = getAuth();
+	try {
+		const userCredential = await signInAnonymously(auth);
+		if (userCredential) {
+			const user = userCredential.user;
+			await updateProfile(user, {displayName: name});
+			navigation.navigate("Chat", {
+				user: {
+					...user,
+					name: name,
+				},
+				backgroundColor: selectedColor,
+				textColor: textColor,
+			});
+		} else {
+			Alert.alert("No user credential returned");
+		}
+	} catch (error) {
+		Alert.alert(error.message);
+	}
+};
 
 	return (
 		<KeyboardAvoidingView
