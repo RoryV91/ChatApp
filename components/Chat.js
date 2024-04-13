@@ -37,8 +37,6 @@ const { user, name, backgroundColor, textColor } = route.params;
   }, []);
 
   const onSend = (newMessages) => {
-    console.log(user)
-    console.log(newMessages[0])
     addDoc(collection(db, "messages"), {
       ...newMessages[0],
       user: {
