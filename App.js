@@ -1,4 +1,4 @@
-// IMPORTS
+// IMPORT STATEMENTS
 import React, { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -22,14 +22,15 @@ import {
 import { useNetInfo } from "@react-native-community/netinfo";
 import { Alert, LogBox } from "react-native";
 
-
+// IGNORE WARNINGS
 LogBox.ignoreLogs(["Async Storage has been extracted from"]);
 
+// NAVIGATION STACK
 const Stack = createNativeStackNavigator();
 
 // MAIN APP
 const App = () => {
-	// Firebase config (obfuscated)
+	// FIREBASE CONFIG (OBFUSCATED FOR SECURITY)
 	const firebaseConfig = {
 		apiKey: FIREBASE_API_KEY,
 		authDomain: FIREBASE_AUTH_DOMAIN,
@@ -40,11 +41,11 @@ const App = () => {
 		measurementId: FIREBASE_MEASUREMENT_ID,
 	};
 
-	// Initialize Firebase
+	// INITIALIZE FIREBASE
 	const app = initializeApp(firebaseConfig);
 	const db = getFirestore(app);
 
-	// Check for network connection
+	// CHECK CONNECTIVITY
 	const connectionStatus = useNetInfo();
 
 	useEffect(() => {
@@ -59,6 +60,7 @@ const App = () => {
 		}
 	}, [connectionStatus.isConnected]);
 
+  // RENDER
 	return (
 		<NavigationContainer>
 			<Stack.Navigator initialRouteName="Start">
@@ -80,4 +82,5 @@ const App = () => {
 	);
 };
 
+// EXPORT
 export default App;

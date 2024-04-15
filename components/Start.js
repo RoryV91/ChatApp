@@ -1,3 +1,4 @@
+// IMPORT STATEMENTS
 import React from "react";
 import { useState } from "react";
 import {
@@ -16,6 +17,7 @@ import iconSvg from "../assets/icon.js";
 import backgroundImage from "../assets/Background-Image.png";
 import { getAuth, signInAnonymously, updateProfile } from "firebase/auth";
 
+// COMPONENT
 const Start = ({ navigation }) => {
 	const [name, setName] = useState("");
 	const colorOptions = [
@@ -24,16 +26,21 @@ const Start = ({ navigation }) => {
 		{ color: "#8A95A5", id: 2, textColor: "#000" },
 		{ color: "#B9C6AE", id: 3, textColor: "#000" },
 	];
+
+	// SELECT RANDOM COLOR ON START
 	const randomIndex = Math.floor(Math.random() * colorOptions.length);
 	const [selectedColor, setSelectedColor] = useState(colorOptions[randomIndex].color);
 	const [textColor, setTextColor] = useState(colorOptions[randomIndex].textColor);
 	const [selectedButton, setSelectedButton] = useState(colorOptions[randomIndex].id);
+
+	// HANDLE USER SELECTION OF COLOR
 	const handleColorSelection = (color, index, textColor) => {
 		setSelectedColor(color);
 		setSelectedButton(index);
 		setTextColor(textColor);
 	};
-
+	
+	// ANONYMOUS SIGN-IN
 	const handleSignIn = async () => {
 		const auth = getAuth();
 		try {
@@ -58,6 +65,7 @@ const Start = ({ navigation }) => {
 		}
 	};
 
+	// RENDER
 	return (
 		<KeyboardAvoidingView
 			behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -135,6 +143,7 @@ const Start = ({ navigation }) => {
 	);
 };
 
+// STYLES
 const styles = StyleSheet.create({
 	imageBackground: {
 		flex: 1,
@@ -227,4 +236,5 @@ const styles = StyleSheet.create({
 	},
 });
 
+// EXPORT
 export default Start;

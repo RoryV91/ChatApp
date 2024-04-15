@@ -1,3 +1,4 @@
+// IMPORT STATEMENTS
 import React from "react";
 import { useState, useEffect } from "react";
 import { StyleSheet, View, KeyboardAvoidingView, Platform } from "react-native";
@@ -18,16 +19,20 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+// COMPONENT
 const Chat = ({ route, navigation, db, isConnected }) => {
 	const { user, name, backgroundColor, textColor } = route.params;
 	const [messages, setMessages] = useState([]);
 
+  // SET NAVIGATION TITLE
 	useEffect(() => {
 		navigation.setOptions({ title: name });
 	}, [name]);
 
+  // MUST BE DECLARED OUTSIDE OF USEEFFECT
 	let unsubscribe;
 
+  // FETCH MESSAGES ON CONNECTION OR LOAD CACHED MESSAGES
 	useEffect(() => {
 		if (isConnected === true) {
 			if (unsubscribe) unsubscribe();
@@ -44,6 +49,7 @@ const Chat = ({ route, navigation, db, isConnected }) => {
 		};
 	}, [isConnected]);
 
+  // FETCH MESSAGES
 	const fetchMessages = () => {
 		const messagesRef = collection(db, "messages");
 		const q = query(messagesRef, orderBy("createdAt", "desc"));
@@ -66,6 +72,7 @@ const Chat = ({ route, navigation, db, isConnected }) => {
 		});
 	};
 
+  // CACHE MESSAGES
 	const cacheMessages = async (messagesToCache) => {
 		try {
 			await AsyncStorage.setItem("messages", JSON.stringify(messagesToCache));
@@ -74,6 +81,7 @@ const Chat = ({ route, navigation, db, isConnected }) => {
 		}
 	};
 
+  // LOAD CACHED MESSAGES
 	const loadCachedMessages = async () => {
 		try {
 			const cachedMessages = await AsyncStorage.getItem("messages");
@@ -85,6 +93,7 @@ const Chat = ({ route, navigation, db, isConnected }) => {
 		}
 	};
 
+  // SEND MESSAGE
 	const onSend = (newMessages) => {
 		addDoc(collection(db, "messages"), {
 			...newMessages[0],
@@ -95,6 +104,7 @@ const Chat = ({ route, navigation, db, isConnected }) => {
 		});
 	};
 
+  // RENDER CUSTOM COMPONENTS
 	const renderSystemMessage = (props) => (
 		<GiftedChatSystemMessage
 			{...props}
@@ -136,12 +146,13 @@ const renderInputToolbar = (props) => {
   }
 };
 
+  // RENDER
 	return (
+    // THIS KEEPS THE SWIPE INDICATOR ON iOS FROM COVERING THE INPUT
 		<SafeAreaView 
       style={[styles.container, { backgroundColor }]}
       edges={["right", "bottom", "left"]}
       >
-			
       <KeyboardAvoidingView
 				style={styles.container}
 			>
@@ -167,10 +178,12 @@ const renderInputToolbar = (props) => {
 	);
 };
 
+// STYLES
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 	},
 });
 
+// EXPORT
 export default Chat;
