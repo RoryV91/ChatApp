@@ -9,7 +9,7 @@ import {
 	TouchableOpacity,
 	ImageBackground,
 	KeyboardAvoidingView,
-  Alert,
+	Alert,
 } from "react-native";
 import { SvgXml } from "react-native-svg";
 import iconSvg from "../assets/icon.js";
@@ -18,44 +18,45 @@ import { getAuth, signInAnonymously, updateProfile } from "firebase/auth";
 
 const Start = ({ navigation }) => {
 	const [name, setName] = useState("");
-	const [selectedColor, setSelectedColor] = useState("");
-	const [textColor, setTextColor] = useState("");
-	const [selectedButton, setSelectedButton] = useState(null);
 	const colorOptions = [
 		{ color: "#090C08", id: 0, textColor: "#FFF" },
 		{ color: "#474056", id: 1, textColor: "#FFF" },
 		{ color: "#8A95A5", id: 2, textColor: "#000" },
 		{ color: "#B9C6AE", id: 3, textColor: "#000" },
 	];
-
+	const randomIndex = Math.floor(Math.random() * colorOptions.length);
+	const [selectedColor, setSelectedColor] = useState(colorOptions[randomIndex].color);
+	const [textColor, setTextColor] = useState(colorOptions[randomIndex].textColor);
+	const [selectedButton, setSelectedButton] = useState(colorOptions[randomIndex].id);
 	const handleColorSelection = (color, index, textColor) => {
 		setSelectedColor(color);
 		setSelectedButton(index);
 		setTextColor(textColor);
 	};
 
-const handleSignIn = async () => {
-	const auth = getAuth();
-	try {
-		const userCredential = await signInAnonymously(auth);
-		if (userCredential) {
-			const user = userCredential.user;
-			await updateProfile(user, {displayName: name});
-			navigation.navigate("Chat", {
-				user: {
-					...user,
+	const handleSignIn = async () => {
+		const auth = getAuth();
+		try {
+			const userCredential = await signInAnonymously(auth);
+			if (userCredential) {
+				const user = userCredential.user;
+				await updateProfile(user, { displayName: name });
+				navigation.navigate("Chat", {
+					user: {
+						uid: user.uid,
+						displayName: user.displayName,						
+					},
 					name: name,
-				},
-				backgroundColor: selectedColor,
-				textColor: textColor,
-			});
-		} else {
-			Alert.alert("No user credential returned");
+					backgroundColor: selectedColor,
+					textColor: textColor,
+				});
+			} else {
+				Alert.alert("No user credential returned");
+			}
+		} catch (error) {
+			Alert.alert(error.message);
 		}
-	} catch (error) {
-		Alert.alert(error.message);
-	}
-};
+	};
 
 	return (
 		<KeyboardAvoidingView
@@ -84,7 +85,7 @@ const handleSignIn = async () => {
 							accessible={true}
 							accessibilityLabel="Name input field"
 							accessibilityHint="Enter your name here"
-              maxLength={32}
+							maxLength={32}
 						/>
 					</View>
 					<View style={styles.colorOptionsContainer}>
@@ -196,7 +197,7 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		width: "80%",
 		marginTop: 10,
-    marginBottom: 10,
+		marginBottom: 10,
 	},
 	colorOption: {
 		width: 40,
