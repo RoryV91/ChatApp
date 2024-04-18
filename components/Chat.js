@@ -1,7 +1,7 @@
 // IMPORT STATEMENTS
 import React from "react";
 import { useState, useEffect } from "react";
-import { StyleSheet, View, KeyboardAvoidingView, Image } from "react-native";
+import { StyleSheet, View, KeyboardAvoidingView, Image, TouchableOpacity, Text } from "react-native";
 import {
 	GiftedChat,
 	Bubble,
@@ -15,43 +15,49 @@ import {
 	onSnapshot,
 	orderBy,
 	addDoc,
-	serverTimestamp,
-	FieldValue,
 } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomActions from "./CustomActions";
 import MapView, { Marker } from "react-native-maps";
+import { Audio } from "expo-av";
 
 // COMPONENT
 const Chat = ({ route, navigation, db, isConnected, storage }) => {
 	const { user, name, backgroundColor, textColor } = route.params;
 	const [messages, setMessages] = useState([]);
-
-	// SET NAVIGATION TITLE
-	useEffect(() => {
-		navigation.setOptions({ title: name });
-	}, [name]);
+	let soundObject = null;
 
 	// MUST BE DECLARED OUTSIDE OF USEEFFECT
 	let unsubscribe;
 
 	// FETCH MESSAGES ON CONNECTION OR LOAD CACHED MESSAGES
 	useEffect(() => {
-		if (isConnected === true) {
+    
+    // SET NAVIGATION TITLE
+    navigation.setOptions({ title: name });
+    // ADD WELCOME MESSAGE
+    addWelcomeMessage();
+		
+    // FETCH MESSAGES IF CONNECTED, OTHERWISE LOAD CACHED MESSAGES
+    if (isConnected === true) {
 			if (unsubscribe) unsubscribe();
 			unsubscribe = null;
 			unsubscribe = fetchMessages();
 		} else {
 			loadCachedMessages();
 		}
-
+    
+    // CLEAN UP
 		return () => {
 			if (unsubscribe) {
 				unsubscribe();
-			}
+      }
+      if (soundObject) {
+        soundObject.unloadAsync();
+      }
 		};
-	}, [isConnected]);
+	}, [isConnected, name]);
 
 	// FETCH MESSAGES
 	const fetchMessages = () => {
@@ -119,6 +125,9 @@ const Chat = ({ route, navigation, db, isConnected, storage }) => {
 			if (message.image) {
 				message.image = message.image;
 			}
+      if (message.audio) {
+        message.audio = message.audio;
+      }
 			addDoc(collection(db, "messages"), {
 				...message,
 				user: {
@@ -129,7 +138,7 @@ const Chat = ({ route, navigation, db, isConnected, storage }) => {
 		});
 	};
 
-  // ADD WELCOME MESSAGE
+	// ADD WELCOME MESSAGE
 	const addWelcomeMessage = async () => {
 		const storedName = await AsyncStorage.getItem("storedName");
 		if (user.displayName === storedName) {
@@ -149,11 +158,6 @@ const Chat = ({ route, navigation, db, isConnected, storage }) => {
 
 		await AsyncStorage.setItem("storedName", user.displayName);
 	};
-  
-  // WELCOME MESSAGE USEEFFECT
-	useEffect(() => {
-		addWelcomeMessage();
-	}, []);
 
 	// RENDER CUSTOM COMPONENTS
 	const renderSystemMessage = (props) => (
@@ -171,11 +175,34 @@ const Chat = ({ route, navigation, db, isConnected, storage }) => {
 	);
 
 	const renderBubble = (props) => {
+
 		return (
 			<Bubble
 				{...props}
 				renderUsernameOnMessage={true}
 			/>
+		);
+	};
+
+	const renderAudioBubble = (props) => {
+		return (
+			<View {...props}>
+				<TouchableOpacity
+					style={{ backgroundColor: "#FF0", borderRadius: 10, margin: 5 }}
+					onPress={async () => {
+						if (soundObject) soundObject.unloadAsync();
+						const { sound } = await Audio.Sound.createAsync({
+							uri: props.currentMessage.audio,
+						});
+						soundObject = sound;
+						await sound.playAsync();
+					}}
+				>
+					<Text style={{ textAlign: "center", color: "black", padding: 5 }}>
+						Play Sound
+					</Text>
+				</TouchableOpacity>
+			</View>
 		);
 	};
 
@@ -206,7 +233,7 @@ const Chat = ({ route, navigation, db, isConnected, storage }) => {
 		);
 	};
 
-	const renderCustomView = (props) => {
+	const renderCustomViews = (props) => {
 		const { currentMessage } = props;
 		if (currentMessage.location) {
 			return (
@@ -262,13 +289,15 @@ const Chat = ({ route, navigation, db, isConnected, storage }) => {
 					renderDay={renderDay}
 					renderInputToolbar={renderInputToolbar}
 					renderActions={renderCustomActions}
-					renderCustomView={renderCustomView}
+					renderCustomView={renderCustomViews}
 					renderMessageImage={renderMessageImage}
+          renderMessageAudio={renderAudioBubble}
 					onSend={(messages) => onSend(messages)}
 					user={{
 						_id: user.uid,
 						name: user.name,
 					}}
+
 					alwaysShowSend={true}
 					accessible={true}
 					accessibilityLabel="Chat interface"

@@ -5,7 +5,10 @@ Chat App is a real-time chat application built with React Native. It provides a 
 ## Features
 
 - **Real-time chat**: Send and receive messages instantly across the platform.
+- **User presence system**: See when a new user enters the chat.
 - **Customizable user interface**: Choose your username and select a background color for your chat screen to personalize your chat experience.
+- **Location sharing**: Share your current location with other users in the chat.
+- **Image sharing**: Share images with other users in the chat.
 
 ## Installation
 
@@ -29,12 +32,21 @@ npm start
 2. Enter your desired username.
 3. Select a background color for your chat screen.
 4. Click the "Start Chatting" button to begin your chat experience.
+5. Use the "+" button to share your location or an image with other users in the chat.
 
 ## Dependencies
 
 - React Native
 - Expo
 - Firebase
+- Gifted Chat
+- React Native Maps
+- React Native Image Picker
+- AsyncStorage
+- NetInfo
+- React Native Action Sheet
+- React Native Svg
+- React Native Dotenv
 
 ## Contributing
 
