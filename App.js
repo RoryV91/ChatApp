@@ -21,6 +21,7 @@ import {
 } from "@env";
 import { useNetInfo } from "@react-native-community/netinfo";
 import { Alert, LogBox } from "react-native";
+import { getStorage } from "firebase/storage";
 
 // IGNORE WARNINGS
 LogBox.ignoreLogs(["Async Storage has been extracted from"]);
@@ -44,6 +45,7 @@ const App = () => {
 	// INITIALIZE FIREBASE
 	const app = initializeApp(firebaseConfig);
 	const db = getFirestore(app);
+  const storage = getStorage(app);
 
 	// CHECK CONNECTIVITY
 	const connectionStatus = useNetInfo();
@@ -73,6 +75,7 @@ const App = () => {
 						<Chat
 							isConnected={connectionStatus.isConnected}
 							db={db}
+              storage={storage}
 							{...props}
 						/>
 					)}

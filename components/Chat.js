@@ -1,7 +1,7 @@
 // IMPORT STATEMENTS
 import React from "react";
 import { useState, useEffect } from "react";
-import { StyleSheet, View, KeyboardAvoidingView, Platform } from "react-native";
+import { StyleSheet, View, KeyboardAvoidingView, Image } from "react-native";
 import {
 	GiftedChat,
 	Bubble,
@@ -15,24 +15,28 @@ import {
 	onSnapshot,
 	orderBy,
 	addDoc,
+	serverTimestamp,
+	FieldValue,
 } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from "react-native-safe-area-context";
+import CustomActions from "./CustomActions";
+import MapView, { Marker } from "react-native-maps";
 
 // COMPONENT
-const Chat = ({ route, navigation, db, isConnected }) => {
+const Chat = ({ route, navigation, db, isConnected, storage }) => {
 	const { user, name, backgroundColor, textColor } = route.params;
 	const [messages, setMessages] = useState([]);
 
-  // SET NAVIGATION TITLE
+	// SET NAVIGATION TITLE
 	useEffect(() => {
 		navigation.setOptions({ title: name });
 	}, [name]);
 
-  // MUST BE DECLARED OUTSIDE OF USEEFFECT
+	// MUST BE DECLARED OUTSIDE OF USEEFFECT
 	let unsubscribe;
 
-  // FETCH MESSAGES ON CONNECTION OR LOAD CACHED MESSAGES
+	// FETCH MESSAGES ON CONNECTION OR LOAD CACHED MESSAGES
 	useEffect(() => {
 		if (isConnected === true) {
 			if (unsubscribe) unsubscribe();
@@ -49,7 +53,7 @@ const Chat = ({ route, navigation, db, isConnected }) => {
 		};
 	}, [isConnected]);
 
-  // FETCH MESSAGES
+	// FETCH MESSAGES
 	const fetchMessages = () => {
 		const messagesRef = collection(db, "messages");
 		const q = query(messagesRef, orderBy("createdAt", "desc"));
@@ -57,7 +61,7 @@ const Chat = ({ route, navigation, db, isConnected }) => {
 			const messages = snapshot.docs.map((doc) => {
 				const data = doc.data();
 				const id = doc.id;
-				return {
+				let message = {
 					_id: id,
 					text: data.text,
 					createdAt: data.createdAt.toDate(),
@@ -66,13 +70,23 @@ const Chat = ({ route, navigation, db, isConnected }) => {
 						name: data.user.name,
 					},
 				};
+				if (data.location) {
+					message.location = {
+						latitude: data.location.latitude,
+						longitude: data.location.longitude,
+					};
+				}
+				if (data.image) {
+					message.image = data.image;
+				}
+				return message;
 			});
 			setMessages(messages);
 			cacheMessages(messages);
 		});
 	};
 
-  // CACHE MESSAGES
+	// CACHE MESSAGES
 	const cacheMessages = async (messagesToCache) => {
 		try {
 			await AsyncStorage.setItem("messages", JSON.stringify(messagesToCache));
@@ -81,7 +95,7 @@ const Chat = ({ route, navigation, db, isConnected }) => {
 		}
 	};
 
-  // LOAD CACHED MESSAGES
+	// LOAD CACHED MESSAGES
 	const loadCachedMessages = async () => {
 		try {
 			const cachedMessages = await AsyncStorage.getItem("messages");
@@ -93,18 +107,55 @@ const Chat = ({ route, navigation, db, isConnected }) => {
 		}
 	};
 
-  // SEND MESSAGE
-	const onSend = (newMessages) => {
-		addDoc(collection(db, "messages"), {
-			...newMessages[0],
-			user: {
-				_id: user.uid,
-				name: user.displayName,
-			},
+	// SEND MESSAGE
+	const onSend = (newMessages = []) => {
+		newMessages.forEach((message) => {
+			if (message.location) {
+				message.location = {
+					latitude: message.location.latitude,
+					longitude: message.location.longitude,
+				};
+			}
+			if (message.image) {
+				message.image = message.image;
+			}
+			addDoc(collection(db, "messages"), {
+				...message,
+				user: {
+					_id: user.uid,
+					name: user.displayName,
+				},
+			});
 		});
 	};
 
-  // RENDER CUSTOM COMPONENTS
+  // ADD WELCOME MESSAGE
+	const addWelcomeMessage = async () => {
+		const storedName = await AsyncStorage.getItem("storedName");
+		if (user.displayName === storedName) {
+			return;
+		}
+		const messagesRef = collection(db, "messages");
+		const welcomeMessage = {
+			text: `${user.displayName} has entered the chat. Welcome 👋`,
+			createdAt: new Date(),
+			system: true,
+			user: {
+				_id: "system",
+				name: "System",
+			},
+		};
+		await addDoc(messagesRef, welcomeMessage);
+
+		await AsyncStorage.setItem("storedName", user.displayName);
+	};
+  
+  // WELCOME MESSAGE USEEFFECT
+	useEffect(() => {
+		addWelcomeMessage();
+	}, []);
+
+	// RENDER CUSTOM COMPONENTS
 	const renderSystemMessage = (props) => (
 		<GiftedChatSystemMessage
 			{...props}
@@ -128,41 +179,91 @@ const Chat = ({ route, navigation, db, isConnected }) => {
 		);
 	};
 
-const renderInputToolbar = (props) => {
-  if (isConnected) {
-    return (
-      <InputToolbar
-        {...props}
-        containerStyle={{
-          backgroundColor: backgroundColor,
-          borderTopColor: textColor,
-          backgroundColor: 'white',
-          marginBottom: 0,
-        }}
-      />
-    );
-  } else {
-    return null;
-  }
-};
+	const renderInputToolbar = (props) => {
+		if (isConnected) {
+			return (
+				<InputToolbar
+					{...props}
+					containerStyle={{
+						backgroundColor: backgroundColor,
+						borderTopColor: textColor,
+						backgroundColor: "white",
+						marginBottom: 0,
+					}}
+				/>
+			);
+		} else {
+			return null;
+		}
+	};
 
-  // RENDER
+	const renderCustomActions = (props) => {
+		return (
+			<CustomActions
+				storage={storage}
+				{...props}
+			/>
+		);
+	};
+
+	const renderCustomView = (props) => {
+		const { currentMessage } = props;
+		if (currentMessage.location) {
+			return (
+				<View style={styles.mapViewWrapper}>
+					<MapView
+						style={styles.mapView}
+						region={{
+							latitude: currentMessage.location.latitude,
+							longitude: currentMessage.location.longitude,
+							latitudeDelta: 0.0922,
+							longitudeDelta: 0.0421,
+						}}
+					>
+						<Marker
+							coordinate={{
+								latitude: currentMessage.location.latitude,
+								longitude: currentMessage.location.longitude,
+							}}
+						/>
+					</MapView>
+				</View>
+			);
+		}
+		return null;
+	};
+
+	const renderMessageImage = (props) => {
+		const { currentMessage } = props;
+		if (currentMessage.image) {
+			return (
+				<Image
+					style={styles.image}
+					source={{ uri: currentMessage.image }}
+				/>
+			);
+		}
+		return null;
+	};
+
+	// RENDER
 	return (
-    // THIS KEEPS THE SWIPE INDICATOR ON iOS FROM COVERING THE INPUT
-		<SafeAreaView 
-      style={[styles.container, { backgroundColor }]}
-      edges={["right", "bottom", "left"]}
-      >
-      <KeyboardAvoidingView
-				style={styles.container}
-			>
+		// THIS KEEPS THE SWIPE INDICATOR ON iOS FROM COVERING THE INPUT
+		<SafeAreaView
+			style={[styles.container, { backgroundColor }]}
+			edges={["right", "bottom", "left"]}
+		>
+			<KeyboardAvoidingView style={styles.container}>
 				<GiftedChat
 					messages={messages}
 					renderBubble={renderBubble}
 					renderSystemMessage={renderSystemMessage}
 					renderUsernameOnMessage={true}
 					renderDay={renderDay}
-          renderInputToolbar={renderInputToolbar}
+					renderInputToolbar={renderInputToolbar}
+					renderActions={renderCustomActions}
+					renderCustomView={renderCustomView}
+					renderMessageImage={renderMessageImage}
 					onSend={(messages) => onSend(messages)}
 					user={{
 						_id: user.uid,
@@ -182,6 +283,21 @@ const renderInputToolbar = (props) => {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
+	},
+	mapView: {
+		width: 150,
+		height: 100,
+	},
+	mapViewWrapper: {
+		borderRadius: 12,
+		margin: 3,
+		overflow: "hidden",
+	},
+	image: {
+		width: 150,
+		height: 100,
+		borderRadius: 12,
+		margin: 3,
 	},
 });
 
