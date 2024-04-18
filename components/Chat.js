@@ -175,6 +175,9 @@ const Chat = ({ route, navigation, db, isConnected, storage }) => {
 	);
 
 	const renderBubble = (props) => {
+    if (props.currentMessage.audio) {
+      return renderAudio(props);
+    }
 
 		return (
 			<Bubble
@@ -184,7 +187,7 @@ const Chat = ({ route, navigation, db, isConnected, storage }) => {
 		);
 	};
 
-	const renderAudioBubble = (props) => {
+	const renderMessageAudio = (props) => {
 		return (
 			<View {...props}>
 				<TouchableOpacity
@@ -199,7 +202,7 @@ const Chat = ({ route, navigation, db, isConnected, storage }) => {
 					}}
 				>
 					<Text style={{ textAlign: "center", color: "black", padding: 5 }}>
-						Play Sound
+						Play Audio
 					</Text>
 				</TouchableOpacity>
 			</View>
@@ -291,7 +294,7 @@ const Chat = ({ route, navigation, db, isConnected, storage }) => {
 					renderActions={renderCustomActions}
 					renderCustomView={renderCustomViews}
 					renderMessageImage={renderMessageImage}
-          renderMessageAudio={renderAudioBubble}
+          renderMessageAudio={renderMessageAudio}
 					onSend={(messages) => onSend(messages)}
 					user={{
 						_id: user.uid,
