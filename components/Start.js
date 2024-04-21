@@ -18,8 +18,11 @@ import backgroundImage from "../assets/Background-Image.png";
 import { getAuth, signInAnonymously, updateProfile } from "firebase/auth";
 
 // COMPONENT
+	// Start component for the chat app that allows users to enter their name and select a background color
 const Start = ({ navigation }) => {
 	const [name, setName] = useState("");
+	// COLOR OPTIONS
+		// Array of color options for the user to choose from
 	const colorOptions = [
 		{ color: "#090C08", id: 0, textColor: "#FFF" },
 		{ color: "#474056", id: 1, textColor: "#FFF" },
@@ -28,12 +31,14 @@ const Start = ({ navigation }) => {
 	];
 
 	// SELECT RANDOM COLOR ON START
+		// Randomly select a color from the colorOptions array, rather than always starting with the first color
 	const randomIndex = Math.floor(Math.random() * colorOptions.length);
 	const [selectedColor, setSelectedColor] = useState(colorOptions[randomIndex].color);
 	const [textColor, setTextColor] = useState(colorOptions[randomIndex].textColor);
 	const [selectedButton, setSelectedButton] = useState(colorOptions[randomIndex].id);
 
 	// HANDLE USER SELECTION OF COLOR
+		// Function to handle the user's selection of a color
 	const handleColorSelection = (color, index, textColor) => {
 		setSelectedColor(color);
 		setSelectedButton(index);
@@ -41,6 +46,7 @@ const Start = ({ navigation }) => {
 	};
 	
 	// ANONYMOUS SIGN-IN
+		// Function to sign in anonymously and navigate to the chat screen
 	const handleSignIn = async () => {
 		const auth = getAuth();
 		try {
@@ -66,11 +72,15 @@ const Start = ({ navigation }) => {
 	};
 
 	// RENDER
+		// Render the Start component with a background image, title, input fields, color options, and a button to start chatting
 	return (
 		<KeyboardAvoidingView
 			behavior={Platform.OS === "ios" ? "padding" : "height"}
 			style={styles.container}
 		>
+			{/* 
+				Background Image for the Start component
+			*/}
 			<ImageBackground
 				source={backgroundImage}
 				style={styles.imageBackground}
@@ -78,6 +88,9 @@ const Start = ({ navigation }) => {
 				<Text style={styles.title}>Chat App</Text>
 				<View style={styles.inputContainer}>
 					<View style={styles.inputIconContainer}>
+						{/*
+							SVG Icon for the Start component input field
+						*/}
 						<SvgXml
 							style={styles.inputIcon}
 							width="20"
@@ -144,6 +157,7 @@ const Start = ({ navigation }) => {
 };
 
 // STYLES
+	// Styles for the Start component
 const styles = StyleSheet.create({
 	imageBackground: {
 		flex: 1,

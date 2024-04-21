@@ -4,7 +4,6 @@ import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { useActionSheet } from "@expo/react-native-action-sheet";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { Audio } from "expo-av";
 
 const CustomActions = ({
 	wrapperStyle,
@@ -14,7 +13,6 @@ const CustomActions = ({
 	user,
 }) => {
 	const actionSheet = useActionSheet();
-	let recordingObject = null;
 
     
 	const generateReference = (uri) => {
@@ -81,79 +79,11 @@ const CustomActions = ({
 		}
 	};
 
-	const startRecording = async () => {
-		try {
-			let permissions = await Audio.requestPermissionsAsync();
-			if (permissions?.granted) {
-				// iOS specific config to allow recording on iPhone devices
-				await Audio.setAudioModeAsync({
-					allowsRecordingIOS: true,
-					playsInSilentModeIOS: true,
-				});
-				Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY)
-					.then((results) => {
-						return results.recording;
-					})
-					.then((recording) => {
-						recordingObject = recording;
-						Alert.alert(
-							"You are recording...",
-							undefined,
-							[
-								{
-									text: "Cancel",
-									onPress: () => {
-										stopRecording();
-									},
-								},
-								{
-									text: "Stop and Send",
-									onPress: () => {
-										sendRecordedSound();
-									},
-								},
-							],
-							{ cancelable: false }
-						);
-					});
-			}
-		} catch (err) {
-			Alert.alert("Failed to record!");
-		}
-	};
-
-	const stopRecording = async () => {
-		await Audio.setAudioModeAsync({
-			allowsRecordingIOS: false,
-			playsInSilentModeIOS: false,
-		});
-		await recordingObject.stopAndUnloadAsync();
-	};
-
-	const sendRecordedSound = async () => {
-		await stopRecording();
-		const uniqueRefString = generateReference(recordingObject.getURI());
-		const newUploadRef = ref(storage, uniqueRefString);
-		const response = await fetch(recordingObject.getURI());
-		const blob = await response.blob();
-		uploadBytes(newUploadRef, blob).then(async (snapshot) => {
-			const soundURL = await getDownloadURL(snapshot.ref);
-			onSend({ audio: soundURL });
-		});
-	};
-
-    useEffect(() => {
-        return () => {
-            if (recordingObject) recordingObject.stopAndUnloadAsync();
-        }
-    }, []);
-
 	const onActionPress = () => {
 		const options = [
 			"Choose From Library",
 			"Take Picture",
 			"Send Location",
-			"Record Audio",
 			"Cancel",
 		];
 		const cancelButtonIndex = options.length - 1;
@@ -172,9 +102,6 @@ const CustomActions = ({
 						return;
 					case 2:
 						getLocation();
-						return;
-					case 3:
-						startRecording();
 						return;
 					default:
 				}
