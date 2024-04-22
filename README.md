@@ -16,10 +16,6 @@ Chat App is an interactive, real-time messaging application developed using Reac
 ![Chat Screen](./assets/chat-screen.png)
 ![Start Screen](./assets/start-screen.png)
 
-## Demo
-
-![Demo GIF](./assets/demo.gif)
-
 ## Installation
 
 ```bash

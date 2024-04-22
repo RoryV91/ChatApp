@@ -4,7 +4,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Start from "./components/Start";
 import Chat from "./components/Chat";
-import { initializeApp } from "firebase/app";
+import { initializeApp, setLoglevel } from "firebase/app";
 import {
 	disableNetwork,
 	enableNetwork,
@@ -24,8 +24,13 @@ import { Alert, LogBox } from "react-native";
 import { getStorage } from "firebase/storage";
 
 // IGNORE WARNINGS
-  // Ignore warnings related to AsyncStorage
+// Ignore warnings related to AsyncStorage and persistent storage
 LogBox.ignoreLogs(["Async Storage has been extracted from"]);
+LogBox.ignoreLogs([
+  "@firebase/auth: Auth",
+  "You are initializing Firebase Auth for React Native without providing AsyncStorage."
+]);
+
 
 // NAVIGATION STACK
   // Create a navigation stack for the app. This stack will contain two screens: Start and Chat. As the user navigates through the app, the appropriate screen will be displayed.
